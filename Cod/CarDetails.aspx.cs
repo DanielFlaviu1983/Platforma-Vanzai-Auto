@@ -1,0 +1,105 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+public partial class CarDetails : System.Web.UI.Page
+{
+    Car car;
+    WishCarCollection wishList;
+
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (Request.QueryString["Id"] != null)
+        {
+            int car_id;
+            if (Int32.TryParse(Request.QueryString["Id"],out car_id))
+            {
+                car = new Car(car_id);
+                Labelmake.Text = car.make;
+                LabelModel.Text = car.model;
+                LabelType.Text = car.type;
+                LabelColour.Text = car.colour;
+                LabelYear.Text = car.year.ToString();
+                LabelLocation.Text = car.location;
+                LabelPrice.Text = car.price.ToString();
+                foreach (Image image in car.images)
+                {
+                    System.Web.UI.WebControls.Image pageImaage = new System.Web.UI.WebControls.Image();
+                    pageImaage.CssClass = "image-responsive col-xs-12";
+                    pageImaage.ImageUrl = image.Url;
+                    images.Controls.Add(pageImaage);
+                }
+
+                if (Session["WishList"] == null)
+                {
+                    wishList = new WishCarCollection();
+                }
+                else
+                {
+                    wishList = Session["WishList"] as WishCarCollection;
+
+                    foreach (WishCar carCheck in wishList)
+                    {
+                        if (carCheck.id == car.id)
+                        {
+                            ButtonAddtoWishlist.Visible = false;
+                            TextBoxWishListComment.Text = carCheck.Notes;
+                            TextBoxWishListComment.ReadOnly = true;
+                            ButtonRemoveFromWishList.Visible = true;
+                        }
+                    }
+                }
+
+                bool error = false;
+                if (Session["user"] == null)
+                {
+                    LabelLoginWarning.Visible = true;
+                    error = true;
+                }
+
+
+
+
+                if (error)
+                {
+                   
+                    ButtonAddtoWishlist.Visible = false;
+                    TextBoxWishListComment.Visible = false;
+                }
+            }
+            else
+            {
+                Response.Redirect("~/AdvanceSearch.aspx");
+            }
+        }
+    }
+    protected void ButtonAddtoWishlist_Click(object sender, EventArgs e)
+    {
+
+        WishCar wishCar = new WishCar(car.id, TextBoxWishListComment.Text);
+        wishList.Add(wishCar);
+        Session["WishList"] = wishList;
+        ButtonAddtoWishlist.Visible = false;
+        TextBoxWishListComment.ReadOnly = true;
+        ButtonRemoveFromWishList.Visible = true;
+
+    }
+    protected void ButtonRemoveFromWishList_Click(object sender, EventArgs e)
+    {
+        wishList.RemoveCar(car);
+        Session["WishList"] = wishList;
+        ButtonAddtoWishlist.Visible = true;
+        TextBoxWishListComment.ReadOnly = false;
+        ButtonRemoveFromWishList.Visible = false;
+    }
+
+
+
+    protected void TextBoxWishListComment_TextChanged(object sender, EventArgs e)
+    {
+
+    }
+}
